@@ -81,3 +81,153 @@ class DataProcessor:
                 imputed_columns.append(idx)
 
         return imputed_data, imputed_columns
+
+
+class SMOTEN:
+    """
+    Generates synthetic samples for minority class to handle imbalanced datasets.
+    """
+
+    def __init__(self, k_neighbors=5, random_state=42):
+        """
+        Initialize SMOTE-N.
+
+        Parameters:
+        - k_neighbors: Number of nearest neighbors to use for generating synthetic samples
+        - random_state: Random seed for reproducibility
+        """
+        self.k_neighbors = k_neighbors
+        self.random_state = random_state
+        if random_state is not None:
+            np.random.seed(random_state)
+
+    @staticmethod
+    def _hamming_distance(x1, x2):
+        """Calculate Hamming distance between two categorical samples."""
+        return np.sum(x1 != x2)
+
+    def _find_k_neighbors(self, X, sample_idx):
+        """
+        Find k nearest neighbors for a given sample using Hamming distance.
+
+        Parameters:
+        - X: 2D array of samples
+        - sample_idx: Index of the sample to find neighbors for
+
+        Returns:
+        - indices: Array of k nearest neighbor indices
+        """
+        sample = X[sample_idx]
+        distances = np.array(
+            [self._hamming_distance(sample, X[i]) for i in range(len(X))], dtype=float
+        )
+
+        # Exclude the sample itself by setting a very large distance
+        distances[sample_idx] = np.inf
+
+        # Get indices of k nearest neighbors
+        neighbor_indices = np.argsort(distances)[: self.k_neighbors]
+        return neighbor_indices
+
+    def _generate_synthetic_sample(self, sample, neighbor, categorical_indices):
+        """
+        Generate a synthetic sample by randomly selecting features from sample and neighbor.
+
+        Parameters:
+        - sample: Original sample
+        - neighbor: Neighbor sample
+        - categorical_indices: Indices of categorical features
+
+        Returns:
+        - synthetic: New synthetic sample
+        """
+        synthetic = sample.copy()
+
+        # For each categorical feature, randomly choose between sample and neighbor
+        for idx in categorical_indices:
+            if np.random.random() < 0.5:
+                synthetic[idx] = neighbor[idx]
+
+        return synthetic
+
+    def fit_resample(self, X, y, categorical_indices=None):
+        """
+        Apply SMOTE-N to balance the dataset.
+
+        Parameters:
+        - X: 2D numpy array of features (all categorical)
+        - y: 1D numpy array of target labels
+        - categorical_indices: List of indices of categorical features (if None, assumes all features are categorical)
+
+        Returns:
+        - X_resampled: Balanced feature array
+        - y_resampled: Balanced target array
+        """
+        if categorical_indices is None:
+            categorical_indices = list(range(X.shape[1]))
+
+        # Get unique classes and their counts
+        unique_classes, class_counts = np.unique(y, return_counts=True)
+
+        if len(unique_classes) < 2:
+            print("Warning: Only one class found. No resampling needed.")
+            return X, y
+
+        # Find majority class count
+        max_count = np.max(class_counts)
+
+        print(f"Original class distribution:")
+        for cls, count in zip(unique_classes, class_counts):
+            print(f"  Class {cls}: {count} samples")
+
+        X_resampled = X.copy()
+        y_resampled = y.copy()
+
+        # For each minority class, generate synthetic samples
+        for cls, count in zip(unique_classes, class_counts):
+            if count < max_count:
+                # Get indices of samples belonging to this class
+                class_indices = np.where(y == cls)[0]
+                X_class = X[class_indices]
+
+                # Calculate number of synthetic samples needed
+                n_synthetic = max_count - count
+
+                print(f"Generating {n_synthetic} synthetic samples for class {cls}...")
+
+                synthetic_samples = []
+
+                # Generate synthetic samples
+                for _ in range(n_synthetic):
+                    # Randomly select a sample from minority class
+                    sample_idx = np.random.randint(0, len(X_class))
+
+                    # Find k nearest neighbors within the same class
+                    neighbor_indices = self._find_k_neighbors(X_class, sample_idx)
+
+                    # Randomly select one neighbor
+                    neighbor_idx = np.random.choice(neighbor_indices)
+
+                    # Generate synthetic sample
+                    synthetic = self._generate_synthetic_sample(
+                        X_class[sample_idx], X_class[neighbor_idx], categorical_indices
+                    )
+
+                    synthetic_samples.append(synthetic)
+
+                # Add synthetic samples to dataset
+                if synthetic_samples:
+                    synthetic_samples = np.array(synthetic_samples)
+                    X_resampled = np.vstack([X_resampled, synthetic_samples])
+                    y_resampled = np.concatenate(
+                        [y_resampled, np.full(len(synthetic_samples), cls)]
+                    )
+
+        print(f"\nResampled class distribution:")
+        unique_classes_new, class_counts_new = np.unique(
+            y_resampled, return_counts=True
+        )
+        for cls, count in zip(unique_classes_new, class_counts_new):
+            print(f"  Class {cls}: {count} samples")
+
+        return X_resampled, y_resampled
