@@ -15,15 +15,17 @@ class CategoricalNaiveBayes:
         self.classes = None
         self.n_features = 0
         self.feature_categories = {}
+        self.class_counts = {}
 
     def fit(self, X, y):
         self.classes, class_counts = np.unique(y, return_counts=True)
         self.n_features = X.shape[1]
         total_samples = len(y)
 
-        # Calculate class priors
+        # Calculate class priors and store class counts
         for cls, count in zip(self.classes, class_counts):
             self.class_priors[cls] = count / total_samples
+            self.class_counts[cls] = count
 
         # Store all unique values for each feature (for smoothing)
         for feature_idx in range(self.n_features):
@@ -72,18 +74,9 @@ class CategoricalNaiveBayes:
                     if feature_value in likelihoods:
                         likelihood = likelihoods[feature_value]
                     else:
-                        # For completely unseen values, use smoothing
                         n_categories = len(self.feature_categories.get(feature_idx, []))
-                        total_count = sum(
-                            [
-                                self.class_priors[c] * len(X)
-                                for c in self.classes
-                                if c == cls
-                            ]
-                        )
-                        likelihood = self.alpha / (
-                            total_count + self.alpha * n_categories
-                        )
+                        total_count = self.class_counts[cls] + self.alpha * n_categories
+                        likelihood = self.alpha / total_count
 
                     class_prob += np.log(likelihood)
                 class_probs[cls] = class_prob
