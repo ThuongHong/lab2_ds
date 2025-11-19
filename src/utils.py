@@ -57,7 +57,7 @@ def classification_report(y_true, y_pred):
             "f1_score": f1_score(y_true, y_pred, cls),
         }
     report["accuracy"] = accuracy(y_true, y_pred)
-    
+
     # print report
     for cls in classes:
         print(
@@ -65,5 +65,5 @@ def classification_report(y_true, y_pred):
             f"Recall: {report[cls]['recall']:.4f}, F1-Score: {report[cls]['f1_score']:.4f}"
         )
     print(f"Overall Accuracy: {report['accuracy']:.4f}")
-    
+
     return report
