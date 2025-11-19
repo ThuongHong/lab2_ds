@@ -51,22 +51,22 @@ A NumPy machine learning project to predict whether a candidate will change jobs
 
 - Model: Categorical Naive Bayes with Laplace smoothing — `src/models.py`
   - Decision rule:
-    $ \hat{y} = \arg\max_c\ P(y{=}c) \prod_{j=1}^d P(x_j\mid y{=}c) $
+    $$ \hat{y} = \arg\max_c\ P(y{=}c) \prod_{j=1}^d P(x_j\mid y{=}c) $$
   - Laplace smoothing for categorical features:
-    $ P(x_j{=}v\mid y{=}c) = \frac{N_{c,j,v} + \alpha}{N_c + \alpha\,|\mathcal{V}_j|} $
+    $$ P(x_j{=}v\mid y{=}c) = \frac{N_{c,j,v} + \alpha}{N_c + \alpha\,|\mathcal{V}_j|} $$
     - $N_{c,j,v}$: count of class $c$ with feature $j$ taking value $v$
     - $N_c$: number of samples of class $c$; $|\mathcal{V}_j|$: number of unique categories of feature $j$; $\alpha>0$.
   - Log-space computation for numerical stability:  
-    $ \log P(y{=}c) + \sum_j \log P(x_j\mid y{=}c) $.
+    $$ \log P(y{=}c) + \sum_j \log P(x_j\mid y{=}c) $$
 
-- NumPy implementation highlights:
+- NumPy implementation:
   - Frequency counts via `np.unique(..., return_counts=True)`.
   - Smoothing: add `alpha` in numerator and `alpha * n_categories` in denominator.
   - Hamming + kNN: compare categorical vectors and use `np.argsort` over distances.
   - Imputation: fast `np.where`; mode via `collections.Counter`.
 
 ## Installation & Setup
-Requires Python 3.x. Install dependencies:
+Requires Python >=3.12. Install dependencies:
 
 ```powershell
 # Create and activate a virtual environment (Windows PowerShell)
@@ -98,7 +98,7 @@ Recommended flow via notebooks:
 Launch notebooks:
 
 ```powershell
-jupyter notebook notebooks
+jupyter notebook
 ```
 
 ## Results
