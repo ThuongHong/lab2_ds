@@ -1,5 +1,7 @@
 # Lab 2 — HR Analytics: Job Change of Data Scientists
 
+[**Repo Link**](https://github.com/ThuongHong/lab2_ds.git) 
+
 A NumPy machine learning project to predict whether a candidate will change jobs (binary classification) using an HR Analytics dataset (mostly categorical features). The repo includes a preprocessing pipeline, class balancing with SMOTEN (categorical SMOTE), a Categorical Naive Bayes model with Laplace smoothing, visualization utilities, and submission generation.
 
 ## Table of Contents
