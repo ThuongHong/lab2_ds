@@ -112,7 +112,8 @@ jupyter notebook
 ├─ data/
 │  ├─ raw/
 │  │  ├─ aug_test.csv
-│  │  └─ aug_train.csv
+│  │  ├─ aug_train.csv
+│  │  ├─ sample_submission.csv
 │  └─ processed/
 │     ├─ processed_test.csv
 │     ├─ processed_train.csv
