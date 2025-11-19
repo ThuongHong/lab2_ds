@@ -259,12 +259,11 @@ class EDAPlotter:
         plt.tight_layout()
         plt.show()
 
-
     @staticmethod
     def plot_missing_values_heatmap(data, headers):
         """
         Plots a heatmap showing the nullity correlation between features.
-        
+
         Nullity correlation ranges from -1 to 1:
         -1: Exact negative correlation (if one is present, other is definitely absent)
         0: No correlation (values present/absent have no effect on one another)
@@ -276,35 +275,37 @@ class EDAPlotter:
         """
         n_features = len(headers)
         n_samples = len(data)
-        
+
         # Create binary matrix: 1 if present, 0 if missing
         present_matrix = (data != "").astype(int)
-        
+
         # Calculate correlation matrix for nullity
         correlation_matrix = np.zeros((n_features, n_features))
-        
+
         for i in range(n_features):
             for j in range(n_features):
                 # Get presence indicators for both features
                 col_i = present_matrix[:, i]
                 col_j = present_matrix[:, j]
-                
+
                 # Calculate Pearson correlation coefficient
                 mean_i = np.mean(col_i)
                 mean_j = np.mean(col_j)
-                
+
                 if np.std(col_i) == 0 or np.std(col_j) == 0:
                     correlation_matrix[i, j] = 0
                 else:
                     cov = np.mean((col_i - mean_i) * (col_j - mean_j))
                     correlation_matrix[i, j] = cov / (np.std(col_i) * np.std(col_j))
-        
+
         # Truncate column names
-        truncated_cols = [str(col)[:15] + '..' if len(str(col)) > 15 else str(col) for col in headers]
-        
+        truncated_cols = [
+            str(col)[:15] + ".." if len(str(col)) > 15 else str(col) for col in headers
+        ]
+
         # Create mask for upper triangle and diagonal
         mask = np.triu(np.ones_like(correlation_matrix, dtype=bool), k=0)
-        
+
         plt.figure(figsize=(10, 5))
         sns.heatmap(
             correlation_matrix,
@@ -314,7 +315,7 @@ class EDAPlotter:
             yticklabels=truncated_cols,
             annot=True,
             fmt=".2f",
-            cbar_kws={'label': 'Nullity Correlation'},
+            cbar_kws={"label": "Nullity Correlation"},
             vmin=-1,
             vmax=1,
             center=0,
@@ -324,16 +325,16 @@ class EDAPlotter:
         plt.title("Heatmap of Nullity Correlation", fontsize=12)
         plt.xlabel("Features", fontsize=10)
         plt.ylabel("Features", fontsize=10)
-        plt.xticks(rotation=45, ha='right', fontsize=8)
+        plt.xticks(rotation=45, ha="right", fontsize=8)
         plt.yticks(rotation=0, fontsize=8)
         plt.tight_layout()
         plt.show()
-    
+
     @staticmethod
     def plot_cramers_v_heatmap(data, headers):
         """
         Plots a heatmap showing Cramér's V correlation between categorical features.
-        
+
         Cramér's V measures association between categorical variables, ranging from 0 to 1:
         0: No association between variables
         1: Perfect association between variables
@@ -342,51 +343,52 @@ class EDAPlotter:
         - data: 2D numpy array of the data
         - headers: List of column names
         """
+
         def cramers_v(x, y):
             """Calculate Cramér's V statistic for categorical-categorical association."""
             # Remove missing values
             mask = (x != "") & (y != "")
             x_clean = x[mask]
             y_clean = y[mask]
-            
+
             if len(x_clean) == 0:
                 return 0
-            
+
             # Get unique categories
             categories_x, x_indices = np.unique(x_clean, return_inverse=True)
             categories_y, y_indices = np.unique(y_clean, return_inverse=True)
-            
+
             # Create contingency table using bincount
             contingency = np.bincount(
                 x_indices * len(categories_y) + y_indices,
-                minlength=len(categories_x) * len(categories_y)
+                minlength=len(categories_x) * len(categories_y),
             ).reshape(len(categories_x), len(categories_y))
-            
+
             # Calculate chi-square statistic
             row_sums = contingency.sum(axis=1, keepdims=True)
             col_sums = contingency.sum(axis=0, keepdims=True)
             total = contingency.sum()
-            
+
             if total == 0:
                 return 0
-            
+
             expected = (row_sums @ col_sums) / total
             expected = np.where(expected == 0, 1e-10, expected)
-            
+
             chi2 = np.sum((contingency - expected) ** 2 / expected)
-            
+
             # Calculate Cramér's V
             min_dim = min(len(categories_x) - 1, len(categories_y) - 1)
-            
+
             if min_dim == 0:
                 return 0
-            
+
             cramers = np.sqrt(chi2 / (total * min_dim))
             return min(cramers, 1.0)
-        
+
         n_features = len(headers)
         correlation_matrix = np.zeros((n_features, n_features))
-        
+
         print("Calculating Cramér's V correlation matrix...")
         # Calculate Cramér's V for all pairs
         for i in range(n_features):
@@ -397,13 +399,15 @@ class EDAPlotter:
                     v = cramers_v(data[:, i], data[:, j])
                     correlation_matrix[i, j] = v
                     correlation_matrix[j, i] = v
-        
+
         # Truncate column names
-        truncated_cols = [str(col)[:12] + '..' if len(str(col)) > 12 else str(col) for col in headers]
-        
+        truncated_cols = [
+            str(col)[:12] + ".." if len(str(col)) > 12 else str(col) for col in headers
+        ]
+
         # Create mask for upper triangle
         mask = np.triu(np.ones_like(correlation_matrix, dtype=bool), k=1)
-        
+
         plt.figure(figsize=(10, 5))
         sns.heatmap(
             correlation_matrix,
@@ -413,16 +417,18 @@ class EDAPlotter:
             yticklabels=truncated_cols,
             annot=True,
             fmt=".2f",
-            cbar_kws={'label': "Cramér's V"},
+            cbar_kws={"label": "Cramér's V"},
             vmin=0,
             vmax=1,
             linewidths=0.5,
-            linecolor='white',
+            linecolor="white",
         )
-        plt.title("Heatmap of Cramér's V Correlation (Categorical Features)", fontsize=14)
+        plt.title(
+            "Heatmap of Cramér's V Correlation (Categorical Features)", fontsize=14
+        )
         plt.xlabel("Features", fontsize=11)
         plt.ylabel("Features", fontsize=11)
-        plt.xticks(rotation=45, ha='right', fontsize=9)
+        plt.xticks(rotation=45, ha="right", fontsize=9)
         plt.yticks(rotation=0, fontsize=9)
         plt.tight_layout()
         plt.show()
