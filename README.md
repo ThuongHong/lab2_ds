@@ -27,8 +27,7 @@ A NumPy machine learning project to predict whether a candidate will change jobs
   - Visualize distributions and categorical associations (Cramér’s V, nullity correlation).
 
 ## Dataset
-- Source: Kaggle — HR Analytics: Job Change of Data Scientists  
-  https://www.kaggle.com/datasets/arashnic/hr-analytics-job-change-of-data-scientists
+- Source: [Kaggle — HR Analytics: Job Change of Data Scientists](https://www.kaggle.com/datasets/arashnic/hr-analytics-job-change-of-data-scientists)
 - Repo data layout:
   - `data/raw/`: Kaggle originals — `aug_train.csv`, `aug_test.csv`, `sample_submission.csv`.
   - `data/processed/`:
@@ -38,6 +37,7 @@ A NumPy machine learning project to predict whether a candidate will change jobs
 - Main features (categorical strings, some may be "Missing"):
   - `city`, `gender`, `relevent_experience`, `enrolled_university`, `education_level`, `major_discipline`, `experience`, `company_size`, `company_type`, `last_new_job`.
   - `target` (train only): `1.0` / `0.0`.
+- **Note**: The dataset is highly imbalanced.
 
 ## Method
 - Data preprocessing (see `src/data_processing.py` and notebooks):
@@ -86,6 +86,12 @@ pip install -r requirements.txt
 `requirements.txt` includes: `numpy`, `matplotlib`, `seaborn`, `notebook`.
 
 ## Usage
+Launch notebooks:
+
+```powershell
+jupyter notebook
+```
+
 Recommended flow via notebooks:
 
 1) `notebooks/01_data_exploration.ipynb`
@@ -95,20 +101,26 @@ Recommended flow via notebooks:
 3) `notebooks/03_modeling.ipynb`
    - Train `CategoricalNaiveBayes(alpha=1.0)`, evaluate metrics; export `data/processed/submission.csv`.
 
-Launch notebooks:
-
-```powershell
-jupyter notebook
-```
-
 ## Results
-- Run `notebooks/03_modeling.ipynb` to reproduce results. It will print:
-  - Overall accuracy and per-class Precision/Recall/F1 (from `src/utils.py`).
-  - Plots: target distribution, stacked bars for categorical vs target, Cramér’s V heatmap, nullity correlation heatmap.
+- Run `notebooks/03_modeling.ipynb` to reproduce results.
+- Metrics on validation set (20% split from training data):
+
+    Class 0.0 (Not looking for job change): Precision: 0.7444, Recall: 0.7291, F1-Score: 0.7367
+
+    Class 1.0 (Looking for job change): Precision: 0.7346, Recall: 0.7497, F1-Score: 0.7420
+
+    Overall Accuracy: 0.7394
+
+- Confusion matrix: 
+<p style="margin-left: 50px;">
+  <img src="assets/confusion_matrix.png" alt="Confusion Matrix" width="400" below/>
+</p>
+- Observations:
+  - Balanced precision/recall/F1 across classes indicates effective handling of class imbalance.
+  - Overall accuracy of ~73.94% is moderate, maybe due to limited model complexity and categorical nature of data.
 
 ## Project Structure
 ```
-.
 ├─ data/
 │  ├─ raw/
 │  │  ├─ aug_test.csv
@@ -149,7 +161,6 @@ jupyter notebook
 - Try alternative methods: SMOTENC (imbalanced-learn) or categorical-friendly models (CatBoost, LightGBM).
 - Cross-validation; tune `alpha`; probability calibration.
 - Richer preprocessing: merge rare categories; treat ordinal features (`experience`, `company_size`, `last_new_job`).
-- Add tests for `src/` and a CLI to run the full pipeline outside notebooks.
 
 ## Contributors
 - Luu Thuong Hong
