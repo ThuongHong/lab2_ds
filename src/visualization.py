@@ -4,7 +4,7 @@ import numpy as np
 from collections import Counter
 
 
-class EDAPlotter:
+class EDAVisualizer:
     @staticmethod
     def plot_target_distribution(target_data, target_col_name="Target"):
         """
@@ -430,5 +430,36 @@ class EDAPlotter:
         plt.ylabel("Features", fontsize=11)
         plt.xticks(rotation=45, ha="right", fontsize=9)
         plt.yticks(rotation=0, fontsize=9)
+        plt.tight_layout()
+        plt.show()
+
+
+class ModelVisualizer:
+    @staticmethod
+    def plot_confusion_matrix(confusion_matrix, class_names):
+        """
+        Plots a confusion matrix heatmap.
+
+        Parameters:
+        - confusion_matrix: 2D numpy array representing the confusion matrix
+        - class_names: List of class names corresponding to the matrix indices
+        """
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(
+            confusion_matrix,
+            annot=True,
+            fmt="d",
+            cmap="Blues",
+            xticklabels=class_names,
+            yticklabels=class_names,
+            cbar_kws={"label": "Count"},
+            linewidths=0.5,
+            linecolor="lightgray",
+        )
+        plt.title("Confusion Matrix", fontsize=14)
+        plt.xlabel("Predicted Label", fontsize=12)
+        plt.ylabel("True Label", fontsize=12)
+        plt.xticks(rotation=45, ha="right", fontsize=10)
+        plt.yticks(rotation=0, fontsize=10)
         plt.tight_layout()
         plt.show()
