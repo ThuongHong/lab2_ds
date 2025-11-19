@@ -46,18 +46,18 @@ A NumPy machine learning project to predict whether a candidate will change jobs
     - Treat missing as a new category value (e.g., "Missing").
   - Class balancing: SMOTEN for categorical features
     - Hamming distance:  
-      d(x, x') = sum_j [x_j != x'_j]
+      $d(x, x') = \sum_j [x_j \neq x'_j]$
     - For each minority-class sample, pick one neighbor among k-NN (within class) by Hamming distance, and synthesize a new sample by randomly taking each feature from either the sample or the neighbor.
 
 - Model: Categorical Naive Bayes with Laplace smoothing — `src/models.py`
   - Decision rule:
-    \( \hat{y} = \arg\max_c\ P(y{=}c) \prod_{j=1}^d P(x_j\mid y{=}c) \)
+    $ \hat{y} = \arg\max_c\ P(y{=}c) \prod_{j=1}^d P(x_j\mid y{=}c) $
   - Laplace smoothing for categorical features:
-    \( P(x_j{=}v\mid y{=}c) = \frac{N_{c,j,v} + \alpha}{N_c + \alpha\,|\mathcal{V}_j|} \)
-    - \(N_{c,j,v}\): count of class \(c\) with feature \(j\) taking value \(v\)
-    - \(N_c\): number of samples of class \(c\); \(|\mathcal{V}_j|\): number of unique categories of feature \(j\); \(\alpha>0\).
+    $ P(x_j{=}v\mid y{=}c) = \frac{N_{c,j,v} + \alpha}{N_c + \alpha\,|\mathcal{V}_j|} $
+    - $N_{c,j,v}$: count of class $c$ with feature $j$ taking value $v$
+    - $N_c$: number of samples of class $c$; $|\mathcal{V}_j|$: number of unique categories of feature $j$; $\alpha>0$.
   - Log-space computation for numerical stability:  
-    \( \log P(y{=}c) + \sum_j \log P(x_j\mid y{=}c) \).
+    $ \log P(y{=}c) + \sum_j \log P(x_j\mid y{=}c) $.
 
 - NumPy implementation highlights:
   - Frequency counts via `np.unique(..., return_counts=True)`.
