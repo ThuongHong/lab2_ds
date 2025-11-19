@@ -121,6 +121,8 @@ Recommended flow via notebooks:
 
 ## Project Structure
 ```
+├─ assets/
+│  └─ confusion_matrix.png
 ├─ data/
 │  ├─ raw/
 │  │  ├─ aug_test.csv
