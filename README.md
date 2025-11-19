@@ -1,6 +1,6 @@
-# Lab 2 — HR Analytics: Job Change of Data Scientists (NumPy)
+# Lab 2 — HR Analytics: Job Change of Data Scientists
 
-A NumPy-first machine learning project to predict whether a candidate will change jobs (binary classification) using an HR Analytics dataset (mostly categorical features). The repo includes a preprocessing pipeline, class balancing with SMOTEN (categorical SMOTE), a Categorical Naive Bayes model with Laplace smoothing, visualization utilities, and submission generation.
+A NumPy machine learning project to predict whether a candidate will change jobs (binary classification) using an HR Analytics dataset (mostly categorical features). The repo includes a preprocessing pipeline, class balancing with SMOTEN (categorical SMOTE), a Categorical Naive Bayes model with Laplace smoothing, visualization utilities, and submission generation.
 
 ## Table of Contents
 - [Introduction](#introduction)
@@ -30,7 +30,7 @@ A NumPy-first machine learning project to predict whether a candidate will chang
 - Source: Kaggle — HR Analytics: Job Change of Data Scientists  
   https://www.kaggle.com/datasets/arashnic/hr-analytics-job-change-of-data-scientists
 - Repo data layout:
-  - `data/raw/`: Kaggle originals — `aug_train.csv`, `aug_test.csv`.
+  - `data/raw/`: Kaggle originals — `aug_train.csv`, `aug_test.csv`, `sample_submission.csv`.
   - `data/processed/`:
     - `processed_train.csv`: preprocessed training data; 10 categorical features + `target` (0/1 as strings in CSV).
     - `processed_test.csv`: preprocessed test; `enrollee_id` + 10 categorical features.
