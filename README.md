@@ -48,26 +48,18 @@ A NumPy machine learning project to predict whether a candidate will change jobs
     - Treat missing as a new category value (e.g., "Missing").
   - Class balancing: SMOTEN for categorical features
     - Hamming distance:  
-      
-      ![equation](assets/hamming_dist.gif)
-      
+      ![equation](assets/hamming_dist.png)
     - For each minority-class sample, pick one neighbor among k-NN (within class) by Hamming distance, and synthesize a new sample by randomly taking each feature from either the sample or the neighbor.
 
 - Model: Categorical Naive Bayes with Laplace smoothing — `src/models.py`
   - Decision rule:
-    
-    ![equation](http://latex.codecogs.com/gif.latex?%5Chat%7By%7D%3D%5Carg%5Cmax_c%5C%2CP%28y%3Dc%29%5Cprod_%7Bj%3D1%7D%5EdP%28x_j%5Cmid%20y%3Dc%29)
-    
+    ![equation](assets/decision_rule.png)
   - Laplace smoothing for categorical features:
-    
-    ![equation](http://latex.codecogs.com/gif.latex?P%28x_j%3Dv%5Cmid%20y%3Dc%29%3D%5Cfrac%7BN_%7Bc%2Cj%2Cv%7D&plus;%5Calpha%7D%7BN_c&plus;%5Calpha%7C%5Cmathcal%7BV%7D_j%7C%7D)
-    
-    - ![equation](http://latex.codecogs.com/gif.latex?N_%7Bc%2Cj%2Cv%7D): count of class ![equation](http://latex.codecogs.com/gif.latex?c) with feature ![equation](http://latex.codecogs.com/gif.latex?j) taking value ![equation](http://latex.codecogs.com/gif.latex?v)
-    - ![equation](http://latex.codecogs.com/gif.latex?N_c): number of samples of class ![equation](http://latex.codecogs.com/gif.latex?c); ![equation](http://latex.codecogs.com/gif.latex?%7C%5Cmathcal%7BV%7D_j%7C): number of unique categories of feature ![equation](http://latex.codecogs.com/gif.latex?j); ![equation](http://latex.codecogs.com/gif.latex?%5Calpha%3E0).
-    
-  - Log-space computation for numerical stability:
-    
-    ![equation](http://latex.codecogs.com/gif.latex?%5Clog%20P%28y%3Dc%29&plus;%5Csum_j%5Clog%20P%28x_j%5Cmid%20y%3Dc%29)
+    ![equation](assets/laplace.png)
+    - $N_{c,j,v}$: count of class $c$ with feature $j$ taking value $v$
+    - $N_c$: number of samples of class $c$; $|\mathcal{V}_j|$: number of unique categories of feature $j$; $\alpha>0$.
+  - Log-space computation for numerical stability:  
+    ![equation](assets/log_space.png)
 
 - NumPy Optimizations & Techniques:
   
