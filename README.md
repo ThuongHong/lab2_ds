@@ -48,24 +48,46 @@ A NumPy machine learning project to predict whether a candidate will change jobs
     - Treat missing as a new category value (e.g., "Missing").
   - Class balancing: SMOTEN for categorical features
     - Hamming distance:  
-      $d(x, x') = \sum_j [x_j \neq x'_j]$
+      
+      ![equation](assets/hamming_dist.gif)
+      
     - For each minority-class sample, pick one neighbor among k-NN (within class) by Hamming distance, and synthesize a new sample by randomly taking each feature from either the sample or the neighbor.
 
 - Model: Categorical Naive Bayes with Laplace smoothing — `src/models.py`
   - Decision rule:
-    $$ \hat{y} = \arg\max_c\ P(y{=}c) \prod_{j=1}^d P(x_j\mid y{=}c) $$
+    
+    ![equation](http://latex.codecogs.com/gif.latex?%5Chat%7By%7D%3D%5Carg%5Cmax_c%5C%2CP%28y%3Dc%29%5Cprod_%7Bj%3D1%7D%5EdP%28x_j%5Cmid%20y%3Dc%29)
+    
   - Laplace smoothing for categorical features:
-    $$ P(x_j{=}v\mid y{=}c) = \frac{N_{c,j,v} + \alpha}{N_c + \alpha\,|\mathcal{V}_j|} $$
-    - $N_{c,j,v}$: count of class $c$ with feature $j$ taking value $v$
-    - $N_c$: number of samples of class $c$; $|\mathcal{V}_j|$: number of unique categories of feature $j$; $\alpha>0$.
-  - Log-space computation for numerical stability:  
-    $$ \log P(y{=}c) + \sum_j \log P(x_j\mid y{=}c) $$
+    
+    ![equation](http://latex.codecogs.com/gif.latex?P%28x_j%3Dv%5Cmid%20y%3Dc%29%3D%5Cfrac%7BN_%7Bc%2Cj%2Cv%7D&plus;%5Calpha%7D%7BN_c&plus;%5Calpha%7C%5Cmathcal%7BV%7D_j%7C%7D)
+    
+    - ![equation](http://latex.codecogs.com/gif.latex?N_%7Bc%2Cj%2Cv%7D): count of class ![equation](http://latex.codecogs.com/gif.latex?c) with feature ![equation](http://latex.codecogs.com/gif.latex?j) taking value ![equation](http://latex.codecogs.com/gif.latex?v)
+    - ![equation](http://latex.codecogs.com/gif.latex?N_c): number of samples of class ![equation](http://latex.codecogs.com/gif.latex?c); ![equation](http://latex.codecogs.com/gif.latex?%7C%5Cmathcal%7BV%7D_j%7C): number of unique categories of feature ![equation](http://latex.codecogs.com/gif.latex?j); ![equation](http://latex.codecogs.com/gif.latex?%5Calpha%3E0).
+    
+  - Log-space computation for numerical stability:
+    
+    ![equation](http://latex.codecogs.com/gif.latex?%5Clog%20P%28y%3Dc%29&plus;%5Csum_j%5Clog%20P%28x_j%5Cmid%20y%3Dc%29)
 
-- NumPy implementation:
-  - Frequency counts via `np.unique(..., return_counts=True)`.
-  - Smoothing: add `alpha` in numerator and `alpha * n_categories` in denominator.
-  - Hamming + kNN: compare categorical vectors and use `np.argsort` over distances.
-  - Imputation: fast `np.where`; mode via `collections.Counter`.
+- NumPy Optimizations & Techniques:
+  
+  **Vectorization:**
+  - **Hamming distance**: Vectorized using broadcasting `np.sum(X != sample, axis=1)` instead of loop-based comparison — computes distances for all samples simultaneously.
+  - **Feature lookup in prediction**: Preallocated `log_probs` matrix (n_samples × n_classes); vectorized likelihood lookup with `np.array([...])` comprehension and batch log computation.
+  - **Random sampling in SMOTEN**: Vectorized random mask `np.random.random(len(indices)) < 0.5` generates all random choices at once.
+  - **Missing value detection**: `np.any(data == "", axis=0)` + `np.where` replaces column-by-column loops.
+
+  **NumPy techniques:**
+  - **Broadcasting**: Shape manipulation for element-wise operations (e.g., `X != sample` with shape (n_samples, n_features) vs (n_features,)).
+  - **Fancy indexing**: `synthetic[categorical_indices_arr[random_mask]] = neighbor[...]` updates multiple array positions in one operation.
+  - **Partial sorting**: `np.argpartition` (O(n)) for k-NN instead of full `np.argsort` (O(n log n)) — faster neighbor selection.
+  - **Boolean masking**: `np.where(has_missing)[0]` efficiently extracts column indices with missing values.
+  - **Matrix operations**: `np.argmax(log_probs, axis=1)` finds class predictions for all samples in one call.
+
+  **Mathematical stability:**
+  - Log-space computation: `np.log(class_priors) + np.sum(np.log(likelihoods))` prevents underflow.
+  - Laplace smoothing: consistent `(count + alpha) / (N + alpha * |V|)` formula for seen and unseen values.
+  - Numerical safety: `distances[sample_idx] = np.inf` excludes self from kNN without conditionals.
 
 ## Installation & Setup
 Requires Python >=3.12. Install dependencies:

@@ -20,28 +20,20 @@ class DataProcessor:
         mode_values = {}
 
         if columns_to_impute is None:
-            # Find all columns with missing values
-            columns_to_impute = []
-            for i in range(data.shape[1]):
-                if np.any(data[:, i] == ""):
-                    columns_to_impute.append(i)
+            has_missing = np.any(data == "", axis=0)
+            columns_to_impute = np.where(has_missing)[0].tolist()
 
         for idx in columns_to_impute:
             col_data = data[:, idx]
-
-            # Get non-missing values
             non_missing = col_data[col_data != ""]
 
             if len(non_missing) == 0:
-                # If all values are missing, skip this column
                 continue
 
-            # Calculate mode using Counter
             counts = Counter(non_missing)
             mode = counts.most_common(1)[0][0]
             mode_values[idx] = mode
 
-            # Replace missing values with mode
             imputed_data[:, idx] = np.where(col_data == "", mode, col_data)
 
         return imputed_data, mode_values
@@ -64,16 +56,12 @@ class DataProcessor:
         imputed_columns = []
 
         if columns_to_impute is None:
-            # Find all columns with missing values
-            columns_to_impute = []
-            for i in range(data.shape[1]):
-                if np.any(data[:, i] == ""):
-                    columns_to_impute.append(i)
+            has_missing = np.any(data == "", axis=0)
+            columns_to_impute = np.where(has_missing)[0].tolist()
 
         for idx in columns_to_impute:
             col_data = data[:, idx]
 
-            # Replace missing values with the missing category
             if np.any(col_data == ""):
                 imputed_data[:, idx] = np.where(
                     col_data == "", missing_category, col_data
@@ -101,14 +89,9 @@ class SMOTEN:
         if random_state is not None:
             np.random.seed(random_state)
 
-    @staticmethod
-    def _hamming_distance(x1, x2):
-        """Calculate Hamming distance between two categorical samples."""
-        return np.sum(x1 != x2)
-
     def _find_k_neighbors(self, X, sample_idx):
         """
-        Find k nearest neighbors for a given sample using Hamming distance.
+        Find k nearest neighbors using vectorized Hamming distance.
 
         Parameters:
         - X: 2D array of samples
@@ -118,15 +101,15 @@ class SMOTEN:
         - indices: Array of k nearest neighbor indices
         """
         sample = X[sample_idx]
-        distances = np.array(
-            [self._hamming_distance(sample, X[i]) for i in range(len(X))], dtype=float
-        )
-
-        # Exclude the sample itself by setting a very large distance
+        
+        distances = np.sum(X != sample, axis=1).astype(float)
         distances[sample_idx] = np.inf
-
-        # Get indices of k nearest neighbors
-        neighbor_indices = np.argsort(distances)[: self.k_neighbors]
+        
+        if len(distances) > self.k_neighbors:
+            neighbor_indices = np.argpartition(distances, self.k_neighbors)[:self.k_neighbors]
+        else:
+            neighbor_indices = np.argsort(distances)[:self.k_neighbors]
+        
         return neighbor_indices
 
     def _generate_synthetic_sample(self, sample, neighbor, categorical_indices):
@@ -143,10 +126,9 @@ class SMOTEN:
         """
         synthetic = sample.copy()
 
-        # For each categorical feature, randomly choose between sample and neighbor
-        for idx in categorical_indices:
-            if np.random.random() < 0.5:
-                synthetic[idx] = neighbor[idx]
+        random_mask = np.random.random(len(categorical_indices)) < 0.5
+        categorical_indices_arr = np.array(categorical_indices)
+        synthetic[categorical_indices_arr[random_mask]] = neighbor[categorical_indices_arr[random_mask]]
 
         return synthetic
 
@@ -166,14 +148,12 @@ class SMOTEN:
         if categorical_indices is None:
             categorical_indices = list(range(X.shape[1]))
 
-        # Get unique classes and their counts
         unique_classes, class_counts = np.unique(y, return_counts=True)
 
         if len(unique_classes) < 2:
             print("Warning: Only one class found. No resampling needed.")
             return X, y
 
-        # Find majority class count
         max_count = np.max(class_counts)
 
         print(f"Original class distribution:")
@@ -183,39 +163,25 @@ class SMOTEN:
         X_resampled = X.copy()
         y_resampled = y.copy()
 
-        # For each minority class, generate synthetic samples
         for cls, count in zip(unique_classes, class_counts):
             if count < max_count:
-                # Get indices of samples belonging to this class
                 class_indices = np.where(y == cls)[0]
                 X_class = X[class_indices]
-
-                # Calculate number of synthetic samples needed
                 n_synthetic = max_count - count
 
                 print(f"Generating {n_synthetic} synthetic samples for class {cls}...")
 
                 synthetic_samples = []
 
-                # Generate synthetic samples
                 for _ in range(n_synthetic):
-                    # Randomly select a sample from minority class
                     sample_idx = np.random.randint(0, len(X_class))
-
-                    # Find k nearest neighbors within the same class
                     neighbor_indices = self._find_k_neighbors(X_class, sample_idx)
-
-                    # Randomly select one neighbor
                     neighbor_idx = np.random.choice(neighbor_indices)
-
-                    # Generate synthetic sample
                     synthetic = self._generate_synthetic_sample(
                         X_class[sample_idx], X_class[neighbor_idx], categorical_indices
                     )
-
                     synthetic_samples.append(synthetic)
 
-                # Add synthetic samples to dataset
                 if synthetic_samples:
                     synthetic_samples = np.array(synthetic_samples)
                     X_resampled = np.vstack([X_resampled, synthetic_samples])
