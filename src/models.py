@@ -54,22 +54,14 @@ class CategoricalNaiveBayes:
                 self.feature_likelihoods[cls][feature_idx] = likelihoods
 
     def predict(self, X):
-        """
-        Predict class labels for given samples.
-        
-        Parameters:
-        - X: 2D array of shape (n_samples, n_features)
-        
-        Returns:
-        - predictions: 1D array of predicted class labels
-        """
         n_samples = X.shape[0]
         n_classes = len(self.classes)
         
         log_probs = np.zeros((n_samples, n_classes))
         
         for idx, cls in enumerate(self.classes):
-            log_probs[:, idx] = np.log(self.class_priors[cls])
+            prior = self.class_priors[cls]
+            log_probs[:, idx] = np.log(np.clip(prior, 1e-10, None))
         
         for feature_idx in range(self.n_features):
             feature_column = X[:, feature_idx]
@@ -85,7 +77,12 @@ class CategoricalNaiveBayes:
                     for val in feature_column
                 ])
                 
-                log_probs[:, cls_idx] += np.log(likelihood_vec)
+                likelihood_vec = np.clip(likelihood_vec, 1e-10, None)
+                log_likelihood_vec = np.log(likelihood_vec)
+                
+                log_probs[:, cls_idx] = np.einsum('i,i->i', 
+                    np.ones(n_samples), 
+                    log_probs[:, cls_idx]) + log_likelihood_vec
         
         predicted_indices = np.argmax(log_probs, axis=1)
         predictions = self.classes[predicted_indices]

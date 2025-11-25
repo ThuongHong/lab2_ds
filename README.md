@@ -78,6 +78,8 @@ A NumPy machine learning project to predict whether a candidate will change jobs
 
   **Mathematical stability:**
   - Log-space computation: `np.log(class_priors) + np.sum(np.log(likelihoods))` prevents underflow.
+  - Underflow/overflow protection: `np.clip(values, 1e-10, None)` ensures all probabilities are non-zero before log computation, preventing `log(0)` errors.
+  - Einstein summation (`einsum`): Efficient tensor operations for log-probability accumulation using `np.einsum('i,i->i', ...)` for element-wise computation.
   - Laplace smoothing: consistent `(count + alpha) / (N + alpha * |V|)` formula for seen and unseen values.
   - Numerical safety: `distances[sample_idx] = np.inf` excludes self from kNN without conditionals.
 
@@ -121,11 +123,12 @@ Recommended flow via notebooks:
 - Run `notebooks/03_modeling.ipynb` to reproduce results.
 - Metrics on validation set (20% split from training data):
 
-    Class 0.0 (Not looking for job change): Precision: 0.7444, Recall: 0.7291, F1-Score: 0.7367
+  Class 0.0: Precision: 0.7463, Recall: 0.7302, F1-Score: 0.7381
 
-    Class 1.0 (Looking for job change): Precision: 0.7346, Recall: 0.7497, F1-Score: 0.7420
+  Class 1.0: Precision: 0.7359, Recall: 0.7517, F1-Score: 0.7437
 
-    Overall Accuracy: 0.7394
+  Overall Accuracy: 0.7410
+    
 
 - Confusion matrix: 
 <p style="margin-left: 50px;">
